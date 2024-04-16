@@ -1,13 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on 7/24/2020
-
-@author: Senthil Pon Kumar P T, Bharath Shivapuram
-@filename: data_preparation.py
-@description: Light Tag
-@comments: 
-"""
-
 import h5py
 import os
 import numpy as np

@@ -33,7 +33,6 @@ data_transforms = {
 }
 
 data_dir = "/home/uif41046/extracted_images"
-#to do train val folders
 image_datasets = {x: datasets.ImageFolder(os.path.join(data_dir, x),
                                           data_transforms[x])
                   for x in ['train', 'val']}
@@ -41,7 +40,7 @@ dataloaders = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=128,
                                              shuffle=True, num_workers=16)
               for x in ['train', 'val']}
 dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'val']}
-class_names = image_datasets['train'].classes
+class_names = image_datasets['train'].classes # 0 -construction; 1 - not construction
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -133,11 +132,11 @@ def visualize_model(model, num_images=6):
 
             for j in range(inputs.size()[0]):
                 images_so_far += 1
-                ax = plt.subplot(num_images//2, 2, images_so_far)
+                ax = plt.subplot(1, 1, 1)
                 ax.axis('off')
-                ax.set_title(f'predicted: {class_names[preds[j]]}')
-                plt.imshow(inputs.cpu().data[j].permute(1, 2, 0))
-                plt.savefig(f"{j}_eval.png")
+                ax.set_title(f'predicted: {class_names[preds[j]]}, label: {class_names[labels[j]]}')
+                ax.imshow(inputs.cpu().data[j].permute(1, 2, 0))
+                plt.savefig(f"eval_imgs/{j}_eval.png")
 
                 if images_so_far == num_images:
                     model.train(mode=was_training)
@@ -155,7 +154,8 @@ model_ft.fc = nn.Linear(num_ftrs, 2)
 
 model_ft = model_ft.to(device)
 
-criterion = nn.CrossEntropyLoss()
+weight_tensor= torch.tensor([10.0, 1.0], device=device)
+criterion = nn.CrossEntropyLoss(weight=weight_tensor)
 
 # Observe that all parameters are being optimized
 optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9)
@@ -167,6 +167,6 @@ exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
 
 
 model_ft = train_model(model_ft, criterion, optimizer_ft, exp_lr_scheduler,
-                       num_epochs=1)
+                       num_epochs=5)
 
-visualize_model(model_ft)
+visualize_model(model_ft, 30)
