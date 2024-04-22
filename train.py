@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.optim import lr_scheduler
 import torch.backends.cudnn as cudnn
+from torch.utils.data import WeightedRandomSampler
 import numpy as np
 import torchvision
 from torchvision import datasets, models, transforms
@@ -11,6 +12,7 @@ import time
 import os
 from PIL import Image
 from tempfile import TemporaryDirectory
+from collections import Counter
 
 cudnn.benchmark = True
 plt.ion()   # interactive mode
@@ -36,15 +38,19 @@ data_dir = "/home/uif41046/extracted_images"
 image_datasets = {x: datasets.ImageFolder(os.path.join(data_dir, x),
                                           data_transforms[x])
                   for x in ['train', 'val']}
-dataloaders = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=128,
-                                             shuffle=True, num_workers=16)
-              for x in ['train', 'val']}
-dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'val']}
-class_names = image_datasets['train'].classes # 0 -construction; 1 - not construction
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+print(device)
+dataloaders = {}
+for name, dataset in image_datasets.items():
+    class_counts = dict(Counter(dataset.targets))
+    weights = [2, 1]
+    # sampler = WeightedRandomSampler(weights=weights, num_samples=len(dataset))
+    dataloaders[name] = torch.utils.data.DataLoader(dataset, batch_size=256,
+                                             shuffle=True, num_workers=16)
 
-
+dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'val']}
+class_names = image_datasets['train'].classes # 0 -construction; 1 - not construction
 
 def train_model(model, criterion, optimizer, scheduler, num_epochs=5):
     since = time.time()
@@ -70,6 +76,10 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=5):
                 running_loss = 0.0
                 running_corrects = 0
 
+                tps=0
+                fps=0
+                fns=0
+
                 # Iterate over data.
                 for inputs, labels in dataloaders[phase]:
                     inputs = inputs.to(device)
@@ -90,17 +100,36 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=5):
                             loss.backward()
                             optimizer.step()
 
+                        if phase == 'val':
+                            y_true = labels.data
+                            y_pred = preds
+
+                            tps += (y_true * y_pred).sum().to(torch.float32)
+                            fps += ((1 - y_true) * y_pred).sum().to(torch.float32)
+                            fns += (y_true * (1 - y_pred)).sum().to(torch.float32)
+                            
+                            
+
                     # statistics
                     running_loss += loss.item() * inputs.size(0)
                     running_corrects += torch.sum(preds == labels.data)
+
                 if phase == 'train':
                     scheduler.step()
 
                 epoch_loss = running_loss / dataset_sizes[phase]
                 epoch_acc = running_corrects.double() / dataset_sizes[phase]
 
+                epsilon = 1e-7
+                            
+                precision = tps / (tps + fps + epsilon)
+                recall = tps / (tps + fns + epsilon)
+                
+                f1 = 2* (precision*recall) / (precision + recall + epsilon)
+                
                 print(f'{phase} Loss: {epoch_loss:.4f} Acc: {epoch_acc:.4f}')
-
+                print(f'{phase} Eval_f1: {f1:.4f} Eval_precision: {precision:.4f} Eval_recall: {recall:.4f}')
+                
                 # deep copy the model
                 if phase == 'val' and epoch_acc > best_acc:
                     best_acc = epoch_acc
@@ -136,7 +165,7 @@ def visualize_model(model, num_images=6):
                 ax.axis('off')
                 ax.set_title(f'predicted: {class_names[preds[j]]}, label: {class_names[labels[j]]}')
                 ax.imshow(inputs.cpu().data[j].permute(1, 2, 0))
-                plt.savefig(f"eval_imgs/{j}_eval.png")
+                plt.savefig(f"/home/uif41046/Licenta/eval_imgs/{j}_eval_{class_names[preds[j]]}_{class_names[labels[j]]}.png")
 
                 if images_so_far == num_images:
                     model.train(mode=was_training)
@@ -167,6 +196,6 @@ exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
 
 
 model_ft = train_model(model_ft, criterion, optimizer_ft, exp_lr_scheduler,
-                       num_epochs=5)
+                       num_epochs=25)
 
-visualize_model(model_ft, 30)
+visualize_model(model_ft, 100)

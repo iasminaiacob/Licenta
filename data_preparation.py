@@ -8,17 +8,17 @@ import json
 from pathlib import Path
 
 # input to feed the recording path to extract the images from h5 to jpg files
-path_name = r"/home/uif41046/2021.06.21_at_07.45.31_camera-mi_680_mem-aff_4.rrec"
+path_name = r"/home/uif41046/construction_site_dataset"
 
 # output path to save 6FPS images
 dest_pathname = r"/home/uif41046/extracted_images"
 
-# sample h5 file name
-h5_filename = r"/home/uif41046/2021.06.21_at_07.45.31_camera-mi_680_mem-aff_4.rrec/Input/{2021.06.21_at_07.45.31_camera-mi_680_mem-aff_4.rrec}_37153d9a_jpg.h5"
+#h5 file name
+h5_filename = r"/home/uif41046/construction_site_dataset/{2021.06.22_at_07.26.03_camera-mi_680_aff-mem-muc-mem_3.rrec}_37153d9a_jpg.h5"
 h5_recname = Path(h5_filename).stem
 
 # json file for the h5 file
-json_file = open("/home/uif41046/2021.06.21_at_07.45.31_camera-mi_680_mem-aff_4.rrec/Output/2021.06.21_at_07.45.31_camera-mi_680_mem-aff_4.rrec_SceneLabels.json", "r")
+json_file = open("/home/uif41046/construction_site_dataset/2021.06.22_at_07.26.03_camera-mi_680_aff-mem-muc-mem_3.rrec_SceneLabels.json", "r")
 data = json.load(json_file)["Sequence"][0]["Labels"]
 
 timestamps_with_construction = []
