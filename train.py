@@ -40,7 +40,7 @@ image_datasets = {x: datasets.ImageFolder(os.path.join(data_dir, x),
                   for x in ['train', 'val']}
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-print(device)
+#print(device)
 dataloaders = {}
 for name, dataset in image_datasets.items():
     class_counts = dict(Counter(dataset.targets))

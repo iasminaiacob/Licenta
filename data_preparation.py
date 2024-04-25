@@ -14,11 +14,11 @@ path_name = r"/home/uif41046/construction_site_dataset"
 dest_pathname = r"/home/uif41046/extracted_images"
 
 #h5 file name
-h5_filename = r"/home/uif41046/construction_site_dataset/{2021.06.22_at_07.26.03_camera-mi_680_aff-mem-muc-mem_3.rrec}_37153d9a_jpg.h5"
+h5_filename = r"/home/uif41046/construction_site_dataset/mnt/fs_share/{2021.06.22_at_09.20.36_camera-mi_680_aff-mem-muc-mem_6.rrec}_37153d9a_jpg.h5"
 h5_recname = Path(h5_filename).stem
 
 # json file for the h5 file
-json_file = open("/home/uif41046/construction_site_dataset/2021.06.22_at_07.26.03_camera-mi_680_aff-mem-muc-mem_3.rrec_SceneLabels.json", "r")
+json_file = open("/home/uif41046/construction_site_dataset/labels2/2021.06.22_at_09.20.36_camera-mi_680_aff-mem-muc-mem_6.rrec_SceneLabels.json", "r")
 data = json.load(json_file)["Sequence"][0]["Labels"]
 
 timestamps_with_construction = []
@@ -59,12 +59,12 @@ def h5keys_to_image_conversion(h5_file_name, save_folder, fps_rate=15, count=0):
                     im.save(os.path.join(save_folder, file_name))
                 #elif int(ts) in timestamps_without_construction:
                  #   file_name = f"nc_{ts}_export_{each_data}.jpg"
-                elif (count % fps_rate) == 0:
-                    file_name = f"not_construction/{h5_recname}_{ts}_export_{each_data}.jpg"
-                    np_array = np.asarray(img_dataset, dtype=np.uint8)
-                    np_array = cv2.imdecode(np_array, cv2.IMREAD_COLOR)
-                    im = Image.fromarray(np_array[:, :, ::-1])
-                    im.save(os.path.join(save_folder, file_name))
+                # elif (count % fps_rate) == 0:
+                #     file_name = f"not_construction/{h5_recname}_{ts}_export_{each_data}.jpg"
+                #     np_array = np.asarray(img_dataset, dtype=np.uint8)
+                #     np_array = cv2.imdecode(np_array, cv2.IMREAD_COLOR)
+                #     im = Image.fromarray(np_array[:, :, ::-1])
+                #     im.save(os.path.join(save_folder, file_name))
 
                 count += 1
 
