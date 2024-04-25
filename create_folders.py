@@ -27,6 +27,7 @@ val_images_c = [img for img in c_imagefiles if img not in train_images_c]
 #train_images_nc = random.sample(nc_imagefiles, num_images_train_nc)
 #val_images_nc = [img for img in nc_imagefiles if img not in train_images_nc]
 
+
 for img in train_images_c:
     shutil.move(os.path.join(path_c, img), os.path.join(dest_train_c, img))
 
