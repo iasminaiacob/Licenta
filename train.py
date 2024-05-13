@@ -7,15 +7,20 @@ from torch.utils.data import WeightedRandomSampler
 import numpy as np
 import torchvision
 from torchvision import datasets, models, transforms
+from torch.nn import functional as F
 import matplotlib.pyplot as plt
 import time
 import os
 from PIL import Image
 from tempfile import TemporaryDirectory
 from collections import Counter
+from torch.utils.tensorboard import SummaryWriter
+import matplotlib.cm as cm
 
 cudnn.benchmark = True
 plt.ion()   # interactive mode
+
+writer = SummaryWriter()
 
 # Data augmentation and normalization for training
 # Just normalization for validation
@@ -51,6 +56,7 @@ for name, dataset in image_datasets.items():
 
 dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'val']}
 class_names = image_datasets['train'].classes # 0 -construction; 1 - not construction
+
 
 def train_model(model, criterion, optimizer, scheduler, num_epochs=5):
     since = time.time()
@@ -130,6 +136,10 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=5):
                 print(f'{phase} Loss: {epoch_loss:.4f} Acc: {epoch_acc:.4f}')
                 print(f'{phase} Eval_f1: {f1:.4f} Eval_precision: {precision:.4f} Eval_recall: {recall:.4f}')
                 
+                writer.add_scalar("Evaluate f1", f1, epoch)
+                writer.add_scalar("Evaluate precision", precision, epoch)
+                writer.add_scalar("Evaluate recall", recall, epoch)
+
                 # deep copy the model
                 if phase == 'val' and epoch_acc > best_acc:
                     best_acc = epoch_acc
@@ -183,7 +193,7 @@ model_ft.fc = nn.Linear(num_ftrs, 2)
 
 model_ft = model_ft.to(device)
 
-weight_tensor= torch.tensor([10.0, 1.0], device=device)
+weight_tensor= torch.tensor([28.0, 4.0], device=device)
 criterion = nn.CrossEntropyLoss(weight=weight_tensor)
 
 # Observe that all parameters are being optimized
@@ -193,9 +203,11 @@ optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9)
 exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
 
 
-
-
 model_ft = train_model(model_ft, criterion, optimizer_ft, exp_lr_scheduler,
-                       num_epochs=25)
+                       num_epochs=1)
+
+
+writer.flush()
+writer.close()
 
 visualize_model(model_ft, 100)
