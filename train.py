@@ -11,31 +11,27 @@ from torch.nn import functional as F
 import matplotlib.pyplot as plt
 import time
 import os
-from PIL import Image
 from tempfile import TemporaryDirectory
 from collections import Counter
 from torch.utils.tensorboard import SummaryWriter
 import matplotlib.cm as cm
 
 cudnn.benchmark = True
-plt.ion()   # interactive mode
+plt.ion() #mod interactiv
 
 writer = SummaryWriter()
 
-# Data augmentation and normalization for training
-# Just normalization for validation
+#Augmentare date pentru antrenare
 data_transforms = {
     'train': transforms.Compose([
         transforms.RandomResizedCrop(224),
         transforms.RandomHorizontalFlip(),
-        transforms.ToTensor(),
-        #transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]) #to do: compute parameters
+        transforms.ToTensor()
     ]),
     'val': transforms.Compose([
         transforms.Resize(256),
         transforms.CenterCrop(224),
-        transforms.ToTensor(),
-        #transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]) #to do: compute parameters
+        transforms.ToTensor()
     ]),
 }
 
@@ -55,13 +51,13 @@ for name, dataset in image_datasets.items():
                                              shuffle=True, num_workers=16)
 
 dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'val']}
-class_names = image_datasets['train'].classes # 0 -construction; 1 - not construction
+class_names = image_datasets['train'].classes #0- construction; 1- not construction
 
 
 def train_model(model, criterion, optimizer, scheduler, num_epochs=5):
     since = time.time()
 
-    # Create a temporary directory to save training checkpoints
+    #Creare dosar temporar pentru a salva checkpoint-uri din antrenare
     with TemporaryDirectory() as tempdir:
         best_model_params_path = os.path.join(tempdir, 'best_model_params.pt')
 
@@ -72,36 +68,37 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=5):
             print(f'Epoch {epoch}/{num_epochs - 1}')
             print('-' * 10)
 
-            # Each epoch has a training and validation phase
+            #Fiecare epoca are o faza de antrenare si una de validare
             for phase in ['train', 'val']:
                 if phase == 'train':
-                    model.train()  # Set model to training mode
+                    model.train() #Modul antrenare
                 else:
-                    model.eval()   # Set model to evaluate mode
+                    model.eval() #Modul evaluare
 
                 running_loss = 0.0
                 running_corrects = 0
 
-                tps=0
-                fps=0
-                fns=0
+                tps = 0
+                fps = 0
+                fns = 0
 
-                # Iterate over data.
+                #Iterarea datelor
                 for inputs, labels in dataloaders[phase]:
                     inputs = inputs.to(device)
                     labels = labels.to(device)
 
-                    # zero the parameter gradients
+                    #Gradientii parametrelor se seteaza cu 0
                     optimizer.zero_grad()
 
-                    # forward
-                    # track history if only in train
+                    #forward
+                    #Monitorizare istoric daca modelul este in modul de antrenare
                     with torch.set_grad_enabled(phase == 'train'):
                         outputs = model(inputs)
                         _, preds = torch.max(outputs, 1)
                         loss = criterion(outputs, labels)
 
-                        # backward + optimize only if in training phase
+                        #backward
+                        #Optimizare daca modelul este in modul de evaluare
                         if phase == 'train':
                             loss.backward()
                             optimizer.step()
@@ -114,9 +111,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=5):
                             fps += ((1 - y_true) * y_pred).sum().to(torch.float32)
                             fns += (y_true * (1 - y_pred)).sum().to(torch.float32)
                             
-                            
-
-                    # statistics
+                    #Statistici
                     running_loss += loss.item() * inputs.size(0)
                     running_corrects += torch.sum(preds == labels.data)
 
@@ -155,7 +150,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=5):
         model.load_state_dict(torch.load(best_model_params_path))
     return model
 
-def visualize_model(model, num_images=6):
+def visualize_model(model, num_images):
     was_training = model.training
     model.eval()
     images_so_far = 0
@@ -183,12 +178,10 @@ def visualize_model(model, num_images=6):
         model.train(mode=was_training)
 
 
-
-
 model_ft = models.resnet18(weights='IMAGENET1K_V1')
 num_ftrs = model_ft.fc.in_features
-# Here the size of each output sample is set to 2.
-# Alternatively, it can be generalized to ``nn.Linear(num_ftrs, len(class_names))``.
+#Marimea fiecarei mostre de iesire se seteaza la 2
+#In mod alternativ, poate fi generalizata astfel ``nn.Linear(num_ftrs, len(class_names))``
 model_ft.fc = nn.Linear(num_ftrs, 2)
 
 model_ft = model_ft.to(device)
@@ -196,15 +189,17 @@ model_ft = model_ft.to(device)
 weight_tensor= torch.tensor([28.0, 4.0], device=device)
 criterion = nn.CrossEntropyLoss(weight=weight_tensor)
 
-# Observe that all parameters are being optimized
+#Se optimizeaza toti parametrii
 optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9)
 
-# Decay LR by a factor of 0.1 every 7 epochs
+#Scadere LR cu un factor de 0.1 o data la 7 epoci
 exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
 
 
 model_ft = train_model(model_ft, criterion, optimizer_ft, exp_lr_scheduler,
-                       num_epochs=1)
+                       num_epochs=15)
+
+torch.save(model_ft.state_dict(), "/home/uif41046/Licenta/model_checkpoint.pt")
 
 
 writer.flush()
