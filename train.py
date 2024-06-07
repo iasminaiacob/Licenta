@@ -120,22 +120,17 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=5):
 
                 epoch_loss = running_loss / dataset_sizes[phase]
                 epoch_acc = running_corrects.double() / dataset_sizes[phase]
-
                 epsilon = 1e-7
-                            
                 precision = tps / (tps + fps + epsilon)
                 recall = tps / (tps + fns + epsilon)
-                
                 f1 = 2* (precision*recall) / (precision + recall + epsilon)
                 
                 print(f'{phase} Loss: {epoch_loss:.4f} Acc: {epoch_acc:.4f}')
                 print(f'{phase} Eval_f1: {f1:.4f} Eval_precision: {precision:.4f} Eval_recall: {recall:.4f}')
-                
                 writer.add_scalar("Evaluate f1", f1, epoch)
                 writer.add_scalar("Evaluate precision", precision, epoch)
                 writer.add_scalar("Evaluate recall", recall, epoch)
 
-                # deep copy the model
                 if phase == 'val' and epoch_acc > best_acc:
                     best_acc = epoch_acc
                     torch.save(model.state_dict(), best_model_params_path)
@@ -146,7 +141,6 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=5):
         print(f'Training complete in {time_elapsed // 60:.0f}m {time_elapsed % 60:.0f}s')
         print(f'Best val Acc: {best_acc:4f}')
 
-        # load best model weights
         model.load_state_dict(torch.load(best_model_params_path))
     return model
 
@@ -180,10 +174,7 @@ def visualize_model(model, num_images):
 
 model_ft = models.resnet18(weights='IMAGENET1K_V1')
 num_ftrs = model_ft.fc.in_features
-#Marimea fiecarei mostre de iesire se seteaza la 2
-#In mod alternativ, poate fi generalizata astfel ``nn.Linear(num_ftrs, len(class_names))``
 model_ft.fc = nn.Linear(num_ftrs, 2)
-
 model_ft = model_ft.to(device)
 
 weight_tensor= torch.tensor([28.0, 4.0], device=device)
@@ -200,7 +191,6 @@ model_ft = train_model(model_ft, criterion, optimizer_ft, exp_lr_scheduler,
                        num_epochs=15)
 
 torch.save(model_ft.state_dict(), "/home/uif41046/Licenta/model_checkpoint.pt")
-
 
 writer.flush()
 writer.close()
