@@ -6,7 +6,7 @@ import shutil
 from pathlib import Path
 import random
 
-path_c = "/home/uif41046/extracted_images/unlabeled_construction"
+path_c = "/home/uif41046/extracted_images/construction"
 dest_train_c = "/home/uif41046/extracted_images/train/construction"
 dest_val_c = "/home/uif41046/extracted_images/val/construction"
 

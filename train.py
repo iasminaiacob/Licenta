@@ -177,7 +177,7 @@ num_ftrs = model_ft.fc.in_features
 model_ft.fc = nn.Linear(num_ftrs, 2)
 model_ft = model_ft.to(device)
 
-weight_tensor= torch.tensor([28.0, 4.0], device=device)
+weight_tensor= torch.tensor([16.0, 5.0], device=device)
 criterion = nn.CrossEntropyLoss(weight=weight_tensor)
 
 #Se optimizeaza toti parametrii
