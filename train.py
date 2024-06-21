@@ -87,7 +87,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=5):
                     inputs = inputs.to(device)
                     labels = labels.to(device)
 
-                    #Gradientii parametrelor se seteaza cu 0
+                    #Gradientii parametrilor se seteaza cu 0
                     optimizer.zero_grad()
 
                     #forward
@@ -126,10 +126,13 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=5):
                 f1 = 2* (precision*recall) / (precision + recall + epsilon)
                 
                 print(f'{phase} Loss: {epoch_loss:.4f} Acc: {epoch_acc:.4f}')
-                print(f'{phase} Eval_f1: {f1:.4f} Eval_precision: {precision:.4f} Eval_recall: {recall:.4f}')
-                writer.add_scalar("Evaluate f1", f1, epoch)
-                writer.add_scalar("Evaluate precision", precision, epoch)
-                writer.add_scalar("Evaluate recall", recall, epoch)
+
+                if phase == 'val':
+                    print(f'{phase} Eval_f1: {f1:.4f} Eval_precision: {precision:.4f} Eval_recall: {recall:.4f}')
+                    writer.add_scalar("Evaluate f1", f1, epoch)
+                    writer.add_scalar("Evaluate precision", precision, epoch)
+                    writer.add_scalar("Evaluate recall", recall, epoch)
+                    writer.add_scalar("Evaluate loss", epoch_loss, epoch)
 
                 if phase == 'val' and epoch_acc > best_acc:
                     best_acc = epoch_acc
@@ -177,18 +180,16 @@ num_ftrs = model_ft.fc.in_features
 model_ft.fc = nn.Linear(num_ftrs, 2)
 model_ft = model_ft.to(device)
 
-weight_tensor= torch.tensor([16.0, 5.0], device=device)
+weight_tensor= torch.tensor([10.0, 2.0], device=device)
 criterion = nn.CrossEntropyLoss(weight=weight_tensor)
 
-#Se optimizeaza toti parametrii
-optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9)
+optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.01, momentum=0.7)
 
-#Scadere LR cu un factor de 0.1 o data la 7 epoci
 exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
 
 
 model_ft = train_model(model_ft, criterion, optimizer_ft, exp_lr_scheduler,
-                       num_epochs=15)
+                       num_epochs=30)
 
 torch.save(model_ft.state_dict(), "/home/uif41046/Licenta/model_checkpoint.pt")
 

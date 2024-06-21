@@ -36,7 +36,7 @@ def forward_hook(module, args, output):
 backward_hook = model_ft.layer4[1].register_full_backward_hook(backward_hook, prepend=False)
 forward_hook = model_ft.layer4[1].register_forward_hook(forward_hook, prepend=False)
 
-img_path = "/home/uif41046/extracted_images/{2021.06.21_at_09.45.42_camera-mi_680_mem-aff_8.rrec}_37153d9a_jpg_1624270041868041_export_odd.jpg"
+img_path = "/home/uif41046/extracted_images/{2021.06.21_at_09.15.39_camera-mi_680_mem-aff_7.rrec}_37153d9a_jpg_1624268671333277_export_odd.jpg"
 image = Image.open(img_path).convert('RGB')
 transform = transforms.Compose([
         transforms.Resize(256),
